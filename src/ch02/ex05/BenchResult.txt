@@ -1,0 +1,4 @@
+BenchmarkPopCount-4     2000000000               1.59 ns/op
+BenchmarkPopCount2-4    200000000                6.90 ns/op
+BenchmarkPopCount3-4    50000000                31.1 ns/op
+BenchmarkPopCount4-4    50000000                33.3 ns/op
