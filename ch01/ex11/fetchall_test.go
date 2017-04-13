@@ -10,7 +10,12 @@ import (
 )
 
 func TestFetch(t *testing.T) {
+	const response = "Test Response"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, response)
+	}))
 	ch := make(chan string)
+	url := server.URL
 	go fetch(url, ch, 0)
 	result := <-ch
 	timeRegex, _ := regexp.Compile(`^[0-9\.]+s`)
@@ -24,4 +29,5 @@ func TestFetch(t *testing.T) {
 	if !strings.HasSuffix(result, url) {
 		t.Errorf("fetch(%q, ch) <-ch want to end with %q but %q", url, url, result)
 	}
+	server.Close()
 }
