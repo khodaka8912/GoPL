@@ -1,0 +1,2 @@
+BenchmarkGetJoinedArgs-8         3000000               402 ns/op
+BenchmarkGetJoinedArgs2-8       10000000               126 ns/op
