@@ -42,10 +42,12 @@ func corner(i, j int) (float64, float64, bool) {
 
 	sx := width/2 + (x-y)*cos30*xyscale
 	sy := height/2 + (x+y)*sin30*xyscale - z*zscale
-	sInf := math.IsInf(sx, 0) || math.IsInf(sy, 0)
+	sInf := math.IsInf(z, 0) || math.IsNaN(z)
 	return sx, sy, sInf
 }
+
 func f(x, y float64) float64 {
 	r := math.Hypot(x, y)
 	return math.Sin(r) / r
 }
+
