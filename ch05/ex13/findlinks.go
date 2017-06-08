@@ -13,17 +13,8 @@ import (
 	"gopl.io/ch5/links"
 )
 
-var cd string
-
 func main() {
 	args := os.Args[1:]
-	dir, err := filepath.Abs(".")
-	if err != nil {
-		log.Fatal(err)
-		os.Exit(1)
-	}
-	cd = dir
-
 	if len(args) == 0 {
 		return
 	}

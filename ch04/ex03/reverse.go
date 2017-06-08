@@ -13,6 +13,7 @@ func main() {
 	args := os.Args[1:]
 	if len(args) != size {
 		fmt.Printf("reverse([%d]int) needs just %[1]d args\n", size)
+		fmt.Println("please recompile to change size.")
 		return
 	}
 	s := [size]int{}

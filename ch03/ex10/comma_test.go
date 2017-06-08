@@ -3,6 +3,7 @@ package main
 import "testing"
 
 var testCases = []struct{ in, out string }{
+	{"", ""},
 	{"1", "1"},
 	{"12", "12"},
 	{"321", "321"},

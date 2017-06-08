@@ -15,8 +15,7 @@ func main() {
 
 func comma(s string) string {
 	buf := bytes.Buffer{}
-	first := s[0]
-	if first == '+' || first == '-' {
+	if first := s[0]; first == '+' || first == '-' {
 		buf.WriteByte(first)
 		s = s[1:]
 	}

@@ -21,8 +21,8 @@ func compressSpace(b []byte) []byte {
 			if space {
 				continue
 			}
-				b[i] = ' '
-				i++
+			b[i] = ' '
+			i++
 			space = true
 		} else {
 			size := utf8.RuneLen(r)
