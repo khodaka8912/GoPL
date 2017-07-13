@@ -22,6 +22,7 @@ func main() {
 	}
 	if n == nil {
 		fmt.Printf("node of id:%q not found", id)
+		return
 	}
 	fmt.Printf("found node:<%s id=\"%s\">", n.Data, id)
 }

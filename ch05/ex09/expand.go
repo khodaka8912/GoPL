@@ -21,5 +21,7 @@ func main() {
 
 func expand(s string, f func(string) string) string {
 	token := regexp.MustCompile(`\$[a-zA-Z_]+`)
-	return token.ReplaceAllStringFunc(s, f)
+	return token.ReplaceAllStringFunc(s, func(string) string {
+		return f(s[1:])
+	})
 }

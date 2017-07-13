@@ -43,13 +43,6 @@ func main() {
 	breadthFirst(pre, list)
 }
 
-var elements = map[string]string{
-	"a":      "href",
-	"img":    "src",
-	"link":   "href",
-	"script": "src",
-}
-
 func breadthFirst(f func(item string) []string, worklist []string) {
 	seen := make(map[string]bool)
 	for len(worklist) > 0 {

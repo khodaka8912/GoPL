@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-var title = flag.String("title", "", "search for title")
+var title = flag.String("search", "", "search for title")
 
 func main() {
 	flag.Parse()
@@ -23,12 +23,12 @@ func main() {
 	}
 	arg := flag.Args()
 	if len(arg) != 1 {
-		fmt.Fprintln(os.Stderr, "xkcd [-serch word] [comic number]")
+		fmt.Fprintln(os.Stderr, "xkcd [-search word] [comic number]")
 		os.Exit(1)
 	}
 	n, err := strconv.Atoi(arg[0])
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "xkcd [-serch word] [comic number]")
+		fmt.Fprintln(os.Stderr, "xkcd [-search word] [comic number]")
 		os.Exit(1)
 	}
 	download(n)
@@ -65,7 +65,11 @@ type info0 struct {
 	News       string
 }
 
-func search(title string) {
+func f(x int) {
+
+}
+
+func search(word string) {
 	files, err := filepath.Glob("*.json")
 	if err != nil {
 		log.Fatal(err)
@@ -83,8 +87,9 @@ func search(title string) {
 			log.Fatal(err)
 			continue
 		}
-		if strings.Contains(info.Title, title) {
-			fmt.Printf("https://xkcd.com/%d/\n", info.Num)
+		if strings.Contains(info.Title, word) || strings.Contains(info.Transcript, word) {
+			fmt.Println("-------")
+			fmt.Printf("%s\t%s\n", info.Title, info.Link)
 			fmt.Println(info.Transcript)
 		}
 	}

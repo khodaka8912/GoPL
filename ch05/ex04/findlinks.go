@@ -29,7 +29,7 @@ func visitLinks(links []string, n *html.Node) []string {
 	if n.Type == html.ElementNode && elements[n.Data] != "" {
 		for _, a := range n.Attr {
 			if a.Key == elements[n.Data] {
-				fmt.Printf("find <%s %s=%s>\n", n.Data, a.Key, a.Val)
+				//fmt.Printf("find <%s %s=%s>\n", n.Data, a.Key, a.Val)
 				links = append(links, a.Val)
 			}
 		}

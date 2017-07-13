@@ -20,7 +20,7 @@ func TestIntSet_Len(t *testing.T) {
 
 	for _, test := range tests {
 		if actual := test.val.Len(); actual != test.len {
-			t.Errorf("Intset(%v).Len() wants %d but %d", test.val, test.len, actual)
+			t.Errorf("IntSet(%v).Len() wants %d but %d", test.val, test.len, actual)
 		}
 	}
 }
