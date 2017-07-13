@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -27,7 +28,7 @@ func main() {
 			log.Print(err)
 			continue
 		}
-		server := &ftpServer{ctrlConn: conn, cd: "."}
+		server := &ftpServer{ctrlConn: conn, wd: "/"}
 		go server.start()
 	}
 }
@@ -35,7 +36,7 @@ func main() {
 type ftpServer struct {
 	ctrlConn   net.Conn
 	clientAddr string
-	cd         string
+	wd         string
 }
 
 type command struct {
@@ -69,7 +70,7 @@ func (s *ftpServer) start() {
 			s.response(ServiceClosing)
 			return
 		case TYPE:
-			if cmd.param == "A" {
+			if cmd.param == "A" || cmd.param == "I" {
 				s.response(CommandOkay)
 			} else {
 				s.response(NotImplForParam)
@@ -88,15 +89,65 @@ func (s *ftpServer) start() {
 			s.store(cmd.param)
 		case NOOP:
 			s.response(CommandOkay)
+		case LIST:
+			s.list(cmd.param)
+		case CWD:
+			s.changeWorkDir(cmd.param)
+		case PWD:
+			s.printWorkDir()
+		case SIZE:
+			s.fileSize(cmd.param)
 		default:
 			s.response(NotImplemented)
 
 		}
 	}
 }
+func (s *ftpServer) list(param string) {
+	dir := path.Join(".", s.wd)
+	if len(param) == 0 {
+		dir = path.Join(dir, param)
+	}
+	entries, err := ioutil.ReadDir(dir)
+	if err != nil {
+		log.Println(err)
+		s.response(FileNotFound)
+	}
+	conn, err := net.Dial("tcp", s.clientAddr)
+	if err != nil {
+		log.Println(err)
+		s.response(CantOpenDataConn)
+		return
+	}
+	defer conn.Close()
+	for _, fi := range entries {
+		fmt.Fprintln(conn, fi.Name())
+	}
+	s.response(ActionCompleted)
+}
+func (s *ftpServer) fileSize(param string) {
+	fi, err := os.Stat(path.Join(".", s.wd, param))
+	if err != nil {
+		log.Println(err)
+		s.response(FileNotFound)
+		return
+	}
+	s.responseWithInfo(FileStatus, fmt.Sprintf("%d", fi.Size()))
+}
+func (s *ftpServer) printWorkDir() {
+	s.responseWithInfo(Created, s.wd)
+}
+func (s *ftpServer) changeWorkDir(param string) {
+	s.wd = param
+	s.response(CommandOkay)
+}
 
 func (s *ftpServer) response(code int) {
 	fmt.Fprintf(s.ctrlConn, "%d\n", code)
+}
+
+func (s *ftpServer) responseWithInfo(code int, info string) {
+	fmt.Fprintf(s.ctrlConn, "%d %s\n", code, info)
 }
 
 func readCommand(r *bufio.Reader) (command, error) {
@@ -123,6 +174,7 @@ func (s *ftpServer) port(param string) {
 	portLower, err2 := strconv.Atoi(params[5])
 	if err1 != nil || err2 != nil {
 		s.response(SyntaxErrorInParam)
+		return
 	}
 	port := portUpper*256 + portLower
 	s.clientAddr = fmt.Sprintf("%s:%d", ip, port)
@@ -130,9 +182,10 @@ func (s *ftpServer) port(param string) {
 }
 
 func (s *ftpServer) retrieve(param string) {
-	path := path.Join(s.cd, param)
+	path := path.Join(".", s.wd, param)
 	file, err := os.Open(path)
 	if err != nil {
+		log.Println(err)
 		s.response(FileNotFound)
 		return
 	}
@@ -140,12 +193,14 @@ func (s *ftpServer) retrieve(param string) {
 	s.response(OpenDataConn)
 	conn, err := net.Dial("tcp", s.clientAddr)
 	if err != nil {
+		log.Println(err)
 		s.response(CantOpenDataConn)
 		return
 	}
 	defer conn.Close()
 	_, err = io.Copy(conn, file)
 	if err != nil {
+		log.Println(err)
 		s.response(TransferAborted)
 		return
 	}
@@ -153,23 +208,26 @@ func (s *ftpServer) retrieve(param string) {
 	s.response(ActionCompleted)
 }
 func (s *ftpServer) store(param string) {
-	path := path.Join(s.cd, param)
+	path := path.Join(".", s.wd, param)
 
 	s.response(OpenDataConn)
 	conn, err := net.Dial("tcp", s.clientAddr)
 	if err != nil {
+		log.Println(err)
 		s.response(CantOpenDataConn)
 		return
 	}
 	defer conn.Close()
 	file, err := os.Create(path)
 	if err != nil {
+		log.Println(err)
 		s.response(FileUnavailable)
 		return
 	}
 	defer file.Close()
 	_, err = io.Copy(file, conn)
 	if err != nil {
+		log.Println(err)
 		s.response(TransferAborted)
 		return
 	}
@@ -189,6 +247,8 @@ const (
 	NOOP = "NOOP"
 
 	CWD  = "CWD"
+	PWD  = "PWD"
+	SIZE = "SIZE"
 	CDUP = "CDUP"
 	LIST = "LIST"
 )
@@ -196,10 +256,12 @@ const (
 const (
 	OpenDataConn       = 150
 	CommandOkay        = 200
+	FileStatus         = 213
 	ServiceReady       = 220
 	ServiceClosing     = 221
 	LoggedIn           = 230
 	ActionCompleted    = 250
+	Created            = 257
 	CantOpenDataConn   = 425
 	FileUnavailable    = 450
 	TransferAborted    = 426
