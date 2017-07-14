@@ -91,9 +91,13 @@ func (s *ftpServer) start() {
 			s.response(CommandOkay)
 		case LIST:
 			s.list(cmd.param)
+		case NLST:
+			s.list(cmd.param)
 		case CWD:
 			s.changeWorkDir(cmd.param)
 		case PWD:
+			s.printWorkDir()
+		case XPWD:
 			s.printWorkDir()
 		case SIZE:
 			s.fileSize(cmd.param)
@@ -105,7 +109,7 @@ func (s *ftpServer) start() {
 }
 func (s *ftpServer) list(param string) {
 	dir := path.Join(".", s.wd)
-	if len(param) == 0 {
+	if len(param) != 0 {
 		dir = path.Join(dir, param)
 	}
 	entries, err := ioutil.ReadDir(dir)
@@ -113,6 +117,7 @@ func (s *ftpServer) list(param string) {
 		log.Println(err)
 		s.response(FileNotFound)
 	}
+	s.response(OpenDataConn)
 	conn, err := net.Dial("tcp", s.clientAddr)
 	if err != nil {
 		log.Println(err)
@@ -248,9 +253,11 @@ const (
 
 	CWD  = "CWD"
 	PWD  = "PWD"
+	XPWD = "XPWD"
 	SIZE = "SIZE"
 	CDUP = "CDUP"
 	LIST = "LIST"
+	NLST = "NLST"
 )
 
 const (
