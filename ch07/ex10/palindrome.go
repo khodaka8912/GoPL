@@ -7,11 +7,13 @@ import (
 )
 
 func main() {
-	word := word(os.Args[1:])
-	if IsPalindrome(word) {
-		fmt.Printf("%v is palindrome.\n", word)
-	} else {
-		fmt.Printf("%v is not palindrome.\n", word)
+	words := os.Args[1:]
+	for _, w := range words {
+		if IsPalindrome(word(w)) {
+			fmt.Printf("%v is palindrome.\n", w)
+		} else {
+			fmt.Printf("%v is not palindrome.\n", w)
+		}
 	}
 }
 
@@ -24,7 +26,7 @@ func IsPalindrome(s sort.Interface) bool {
 	return true
 }
 
-type word []string
+type word []byte
 
 func (w word) Len() int {
 	return len(w)
