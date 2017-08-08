@@ -1,0 +1,4 @@
+package tar
+
+func init() {
+}
