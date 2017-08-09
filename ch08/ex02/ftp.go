@@ -9,26 +9,69 @@ import (
 	"log"
 	"net"
 	"os"
-	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
 
+const (
+	// must be implemented for minimum implementation
+	USER = "USER"
+	QUIT = "QUIT"
+	PORT = "PORT"
+	TYPE = "TYPE"
+	MODE = "MODE"
+	RETR = "RETR"
+	STOR = "STOR"
+	NOOP = "NOOP"
+
+	CWD  = "CWD"
+	PWD  = "PWD"
+	XPWD = "XPWD"
+	SIZE = "SIZE"
+	LIST = "LIST"
+	NLST = "NLST"
+)
+
+const (
+	OpenDataConn       = 150
+	CommandOkay        = 200
+	FileStatus         = 213
+	ServiceReady       = 220
+	ServiceClosing     = 221
+	LoggedIn           = 230
+	ActionCompleted    = 250
+	Created            = 257
+	CantOpenDataConn   = 425
+	FileUnavailable    = 450
+	TransferAborted    = 426
+	SyntaxErrorInParam = 501
+	NotImplemented     = 502
+	NotImplForParam    = 504
+	FileNotFound       = 550
+)
+
+var port = flag.Int("port", 21, "listen port")
+
 func main() {
 	flag.Parse()
 
-	listener, err := net.Listen("tcp", "localhost:21")
+	listener, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", *port))
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	wd, err := filepath.Abs(".")
+	if err != nil {
+		log.Fatal(err)
+	}
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
 			log.Print(err)
 			continue
 		}
-		server := &ftpServer{ctrlConn: conn, wd: "/"}
+		server := &ftpServer{ctrlConn: conn, wd: wd}
 		go server.start()
 	}
 }
@@ -89,15 +132,11 @@ func (s *ftpServer) start() {
 			s.store(cmd.param)
 		case NOOP:
 			s.response(CommandOkay)
-		case LIST:
-			s.list(cmd.param)
-		case NLST:
+		case LIST, NLST:
 			s.list(cmd.param)
 		case CWD:
 			s.changeWorkDir(cmd.param)
-		case PWD:
-			s.printWorkDir()
-		case XPWD:
+		case PWD, XPWD:
 			s.printWorkDir()
 		case SIZE:
 			s.fileSize(cmd.param)
@@ -108,14 +147,15 @@ func (s *ftpServer) start() {
 	}
 }
 func (s *ftpServer) list(param string) {
-	dir := path.Join(".", s.wd)
+	dir := s.wd
 	if len(param) != 0 {
-		dir = path.Join(dir, param)
+		dir = filepath.Join(dir, param)
 	}
 	entries, err := ioutil.ReadDir(dir)
 	if err != nil {
 		log.Println(err)
 		s.response(FileNotFound)
+		return
 	}
 	s.response(OpenDataConn)
 	conn, err := net.Dial("tcp", s.clientAddr)
@@ -130,8 +170,9 @@ func (s *ftpServer) list(param string) {
 	}
 	s.response(ActionCompleted)
 }
+
 func (s *ftpServer) fileSize(param string) {
-	fi, err := os.Stat(path.Join(".", s.wd, param))
+	fi, err := os.Stat(filepath.Join(s.wd, param))
 	if err != nil {
 		log.Println(err)
 		s.response(FileNotFound)
@@ -139,11 +180,29 @@ func (s *ftpServer) fileSize(param string) {
 	}
 	s.responseWithInfo(FileStatus, fmt.Sprintf("%d", fi.Size()))
 }
+
 func (s *ftpServer) printWorkDir() {
-	s.responseWithInfo(Created, s.wd)
+	s.responseWithInfo(Created, fmt.Sprintf(`"%s" is the current directory`, s.wd))
 }
+
 func (s *ftpServer) changeWorkDir(param string) {
-	s.wd = param
+	dir, err := filepath.Abs(filepath.Join(s.wd, param))
+	if err != nil {
+		log.Print(err)
+		s.response(FileNotFound)
+		return
+	}
+	f, err := os.Stat(dir)
+	if err != nil {
+		log.Print(err)
+		s.response(FileNotFound)
+		return
+	}
+	if !f.IsDir() {
+		s.response(FileNotFound)
+		return
+	}
+	s.wd = dir
 	s.response(CommandOkay)
 }
 
@@ -187,7 +246,7 @@ func (s *ftpServer) port(param string) {
 }
 
 func (s *ftpServer) retrieve(param string) {
-	path := path.Join(".", s.wd, param)
+	path := filepath.Join(s.wd, param)
 	file, err := os.Open(path)
 	if err != nil {
 		log.Println(err)
@@ -212,8 +271,9 @@ func (s *ftpServer) retrieve(param string) {
 
 	s.response(ActionCompleted)
 }
+
 func (s *ftpServer) store(param string) {
-	path := path.Join(".", s.wd, param)
+	path := filepath.Join(s.wd, param)
 
 	s.response(OpenDataConn)
 	conn, err := net.Dial("tcp", s.clientAddr)
@@ -239,41 +299,3 @@ func (s *ftpServer) store(param string) {
 
 	s.response(ActionCompleted)
 }
-
-const (
-	// must be implemented for minimum implementation
-	USER = "USER"
-	QUIT = "QUIT"
-	PORT = "PORT"
-	TYPE = "TYPE"
-	MODE = "MODE"
-	RETR = "RETR"
-	STOR = "STOR"
-	NOOP = "NOOP"
-
-	CWD  = "CWD"
-	PWD  = "PWD"
-	XPWD = "XPWD"
-	SIZE = "SIZE"
-	CDUP = "CDUP"
-	LIST = "LIST"
-	NLST = "NLST"
-)
-
-const (
-	OpenDataConn       = 150
-	CommandOkay        = 200
-	FileStatus         = 213
-	ServiceReady       = 220
-	ServiceClosing     = 221
-	LoggedIn           = 230
-	ActionCompleted    = 250
-	Created            = 257
-	CantOpenDataConn   = 425
-	FileUnavailable    = 450
-	TransferAborted    = 426
-	SyntaxErrorInParam = 501
-	NotImplemented     = 502
-	NotImplForParam    = 504
-	FileNotFound       = 550
-)
