@@ -16,27 +16,26 @@ type test struct {
 }
 
 func main() {
-
 	a := test{
 		map[string]bool{
 			"Key1": true,
 			"Key2": false,
 		}, 123.456, true, complex(9.9, -0.5), nil,
 	}
-	bytes, err := Marshal(a)
+	b, err := Marshal(a)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("a=" + string(bytes))
+	fmt.Println("a=" + string(b))
 	zero := test{}
 
-	bytes, err = Marshal(zero)
+	b, err = Marshal(zero)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("zero=" + string(bytes))
+	fmt.Println("zero=" + string(b))
 
 }
 

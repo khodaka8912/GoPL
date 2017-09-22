@@ -35,11 +35,11 @@ func Unmarshal(data []byte, out interface{}) error {
 func NewDecoder(r io.Reader) *Decoder {
 	lex := &lexer{scan: scanner.Scanner{Mode: scanner.GoTokens}}
 	lex.scan.Init(r)
+	lex.next() // get the first token
 	return &Decoder{lex}
 }
 
 func (dec *Decoder) Decode(out interface{}) (err error) {
-	dec.lex.next() // get the first token
 	defer func() {
 		// NOTE: this is not an example of ideal error handling.
 		if x := recover(); x != nil {
