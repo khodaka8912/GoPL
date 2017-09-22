@@ -46,7 +46,7 @@ func broadcaster() {
 				select {
 				case cli.ch <- msg:
 				default:
-					log.Println("buffer over. slip message to " + cli.name)
+					log.Println("buffer over. skip message to " + cli.name)
 				}
 			}
 		case cli := <-entering:

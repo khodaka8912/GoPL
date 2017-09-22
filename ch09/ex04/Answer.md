@@ -13,9 +13,9 @@ created by main.main
 ## パイプラインを伝わる時間
 ```
 $ ./routins.exe -limit 10000
-6.018100 ms has elapsed for communications of 10000 pipes
+6.018100 ms has elapsed for communications of 10,000 pipes
 $ ./routins.exe -limit 100000
-57.151900 ms has elapsed for communications of 100000 pipes
+57.151900 ms has elapsed for communications of 100,000 pipes
 $ ./routins.exe -limit 1000000
-3024.034800 ms has elapsed for communications of 1000000 pipes
+3024.034800 ms has elapsed for communications of 1,000,000 pipes
 ```

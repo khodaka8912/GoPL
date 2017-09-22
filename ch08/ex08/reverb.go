@@ -19,15 +19,21 @@ func echo(c net.Conn, shout string, delay time.Duration) {
 
 func handleConn(c net.Conn) {
 	input := bufio.NewScanner(c)
-	defer c.Close()
-	for {
-		select {
-		case input.Scan():
-			echo(c, input.Text(), 1*time.Second)
-		case <-time.After(10 * time.Second):
-			log.Printf("close connection of silent client:%v", c.RemoteAddr())
-			return
+	in := make(chan string, 1)
+	go func() {
+		defer c.Close()
+		for {
+			select {
+			case text := <-in:
+				echo(c, text, 1*time.Second)
+			case <-time.After(10 * time.Second):
+				log.Printf("close connection of silent client:%v", c.RemoteAddr())
+				return
+			}
 		}
+	}()
+	for input.Scan() {
+		in <- input.Text()
 	}
 }
 
