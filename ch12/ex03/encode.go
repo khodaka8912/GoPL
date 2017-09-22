@@ -8,18 +8,19 @@ import (
 )
 
 func main() {
-
 	a := struct {
 		Map       map[string]bool
 		Float     float32
 		Boolean   bool
 		Complex   complex128
 		Interface fmt.Stringer
+		Test      interface{}
 	}{
 		map[string]bool{
 			"Key1": true,
 			"Key2": false,
 		}, 123.456, true, complex(9.9, -0.5), bytes.NewBufferString("BufStr"),
+		[]string{"a"},
 	}
 	bytes, err := Marshal(a)
 	if err != nil {
@@ -117,12 +118,12 @@ func encode(buf *bytes.Buffer, v reflect.Value) error {
 	case reflect.Interface:
 		buf.WriteByte('(')
 		t := v.Type()
-		fmt.Fprintf(buf, `"%s.%s" `, t.PkgPath(), t.Name())
+		fmt.Fprintf(buf, `"%s" `, t.String())
 		if err := encode(buf, v.Elem()); err != nil {
 			return err
 		}
 		buf.WriteByte(')')
-	default: // chan, func, interface
+	default: // chan, func
 		return fmt.Errorf("unsupported type: %s", v.Type())
 	}
 	return nil

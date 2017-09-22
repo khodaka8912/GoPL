@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
-	"strings"
 )
 
 type key struct {
@@ -64,18 +63,6 @@ func formatAtom(v reflect.Value) string {
 		reflect.Slice, reflect.Map:
 		return v.Type().String() + " 0x" +
 			strconv.FormatUint(uint64(v.Pointer()), 16)
-	case reflect.Array:
-		elms := make([]string, v.Len())
-		for i := 0; i < v.Len(); i++ {
-			elms[i] = formatAtom(v.Index(i))
-		}
-		return v.Type().String() + "[" + strings.Join(elms, ", ") + "]"
-	case reflect.Struct:
-		fields := make([]string, v.NumField())
-		for i := 0; i < v.NumField(); i++ {
-			fields[i] = v.Type().Field(i).Name + "=" + formatAtom(v.Field(i))
-		}
-		return v.Type().String() + "[" + strings.Join(fields, ", ") + "]"
 	default: // reflect.Interface
 		return v.Type().String() + " value"
 	}
@@ -107,7 +94,7 @@ func display(path string, v reflect.Value, depth int) {
 		if v.IsNil() {
 			fmt.Printf("%s = nil\n", path)
 		} else {
-			display(fmt.Sprintf("(*%s)", path), v.Elem(), depth+1)
+			display(fmt.Sprintf("(*%s)", path), v.Elem(), depth)
 		}
 	case reflect.Interface:
 		if v.IsNil() {
