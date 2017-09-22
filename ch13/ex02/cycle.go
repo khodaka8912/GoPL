@@ -7,38 +7,41 @@ import (
 )
 
 type Circle struct {
-	name string
-	tail *Circle
+	name   string
+	next   *Circle
+	before *Circle
 }
 
 func main() {
-	var a, b, c, d Circle
-	a.tail = &b
-	b.tail = &c
-	c.tail = &a
-	d.tail = &Circle{}
+	var a, b, c, d, e Circle
+	a.next = &b
+	b.next = &c
+	c.next = &a
+	d.next = &e
+	d.before = &e
 
 	fmt.Println(HasCirculation(a))
 	fmt.Println(HasCirculation(d))
 }
 
 func HasCirculation(v interface{}) bool {
-	seen := make(map[value]bool)
+	seen := make([]value, 0)
 	return hasCirculation(reflect.ValueOf(v), seen)
 }
 
-func hasCirculation(v reflect.Value, seen map[value]bool) bool {
+func hasCirculation(v reflect.Value, seen []value) bool {
 	if !v.IsValid() {
 		return false
 	}
 	if v.CanAddr() {
 		ptr := unsafe.Pointer(v.UnsafeAddr())
 		val := value{ptr, v.Type()}
-		if seen[val] {
-			return true
+		for _, s := range seen {
+			if val == s {
+				return true
+			}
 		}
-		seen[val] = true
-
+		seen = append(seen, val)
 	}
 
 	switch v.Kind() {
